@@ -26,7 +26,7 @@ public:
             }
 
             // decreasing slope
-            down = 0;
+            down = 1;
             while(i < n && ratings[i] < ratings[i - 1]) {
                 down++;
                 sum = sum + down;
@@ -34,8 +34,8 @@ public:
             }
 
             // if down > peak, we must compensate since peak element was counted only once
-            if(down >= peak) {
-                sum += (down - peak + 1);
+            if(down >peak) {
+                sum += (down - peak );
             }
         }
 
