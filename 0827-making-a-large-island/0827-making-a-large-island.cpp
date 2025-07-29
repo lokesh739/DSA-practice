@@ -1,58 +1,39 @@
-class DisjointSet {
+class DSU {
 public:
-    vector<int> rank;
-    vector<int> parent;
-    vector<int> size;
-    DisjointSet(int n) {
-        rank.resize(n+1,0);
-        parent.resize(n+1);
-        size.resize(n+1);
-        for(int i=0;i<=n;i++){
-            parent[i]=i;
-            size[i]=1;
-        }
+    vector<int> parent, size;
+
+    DSU(int n) {
+        parent.resize(n + 1);
+        size.resize(n + 1, 1);
+        for (int i = 0; i <= n; i++)
+            parent[i] = i;
     }
 
-    int findultimateparent(int x){
-        if(x==parent[x]) return x;
-        return parent[x]=findultimateparent(parent[x]);
+    int findParent(int x) {
+        if (parent[x] != x)
+            parent[x] = findParent(parent[x]);
+        return parent[x];
     }
 
-    bool find(int u, int v) {
-        if(findultimateparent(u)==findultimateparent(v)){
-            return true;
+    bool unite(int i, int j) {
+        int para = findParent(i);
+        int parb = findParent(j);
+
+        if (para == parb) return false;
+
+        if (size[para] <= size[parb]) {
+            parent[para] = parb; 
+            size[parb] += size[para];
+        } else {
+            parent[parb] = para;
+            size[para] += size[parb];
         }
-        return false;
+
+        return true;
     }
 
-    void unionByRank(int u, int v) {
-        int ulu=findultimateparent(u);
-        int ulv=findultimateparent(v);
-        if(ulu==ulv) return;
-        if(rank[ulu]<rank[ulv]){
-            parent[ulu]=ulv;
-        }
-        else if(rank[ulv]<rank[ulu]){
-            parent[ulv]=ulu;
-        }
-        else{
-            parent[ulu]=ulv;
-            rank[ulv]++;
-        }
-    }
-
-    void unionBySize(int u, int v) {
-       int ulu=findultimateparent(u);
-       int ulv=findultimateparent(v);
-       if(ulu==ulv) return;
-       if(size[ulu]<size[ulv]){
-        parent[ulu]=ulv;
-        size[ulv]+=size[ulu];
-       }
-       else{
-        parent[ulv]=ulu;
-        size[ulu]+=size[ulv];
-       }
+    int giveSize(int i) {
+        return size[findParent(i)];
     }
 };
 
@@ -60,49 +41,45 @@ class Solution {
 public:
     int largestIsland(vector<vector<int>>& grid) {
         int n=grid.size();
-        DisjointSet ds(n*n);
-        for(int row=0;row<n;row++){
-            for(int col=0;col<n;col++){
-                if(grid[row][col]==0) continue;
-                int drow[4]={1,0,-1,0};
-                int dcol[4]={0,1,0,-1};
-                for(int i=0;i<4;i++){
-                    int nrow=row+drow[i];
-                    int ncol=col+dcol[i];
-                    if(nrow>=0 && nrow<n && ncol>=0 && ncol<n && grid[nrow][ncol]==1){
-                        int node=row*n+col;
-                        int adjnode=nrow*n+ncol;
-                        ds.unionBySize(node,adjnode);
+        DSU dsu(n*n);
+        vector<pair<int,int>> dir={{0,1},{1,0},{0,-1},{-1,0}};
+
+        for(int i=0;i<n;i++){
+            for(int j=0;j<n;j++){
+                if(grid[i][j]==1){
+                    for(auto [dx,dy]:dir){
+                        int nx=i+dx, ny=j+dy;
+                        if(nx>=0 && ny>=0 && nx<n && ny<n && grid[nx][ny]==1){
+                            dsu.unite(i*n+j, nx*n+ny);
+                        }
                     }
                 }
             }
         }
 
-        int maxcount=0;
-        for(int row=0;row<n;row++){
-            for(int col=0;col<n;col++){
-                if(grid[row][col]==1) continue;
-                int drow[4]={1,0,-1,0};
-                int dcol[4]={0,1,0,-1};
-                set<int> components;
-                for(int i=0;i<4;i++){
-                    int nrow=row+drow[i];
-                    int ncol=col+dcol[i];
-                    if(nrow>=0 && nrow<n && ncol>=0 && ncol<n && grid[nrow][ncol]==1){
-                        components.insert(ds.findultimateparent(nrow*n+ncol));
+        int maxSize=0;
+
+        for(int i=0;i<n;i++)
+            for(int j=0;j<n;j++)
+                if(grid[i][j]==1) 
+                    maxSize=max(maxSize, dsu.giveSize(i*n+j));
+
+        for(int i=0;i<n;i++){
+            for(int j=0;j<n;j++){
+                if(grid[i][j]==0){
+                    unordered_set<int> st;
+                    for(auto [dx,dy]:dir){
+                        int nx=i+dx, ny=j+dy;
+                        if(nx>=0 && ny>=0 && nx<n && ny<n && grid[nx][ny]==1)
+                            st.insert(dsu.findParent(nx*n+ny));
                     }
+                    int sz=1;
+                    for(int p:st) sz+=dsu.size[p];
+                    maxSize=max(maxSize,sz);
                 }
-                int sizetotal=0;
-                for(auto it:components){
-                    sizetotal+=ds.size[it];
-                }
-                maxcount=max(maxcount,sizetotal+1);
             }
         }
-        for(int cell=0;cell<n*n;cell++){
-            maxcount=max(maxcount,ds.size[ds.findultimateparent(cell)]);
-        }
-        return maxcount;
 
+        return maxSize;
     }
 };
