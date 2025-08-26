@@ -3,9 +3,9 @@ public:
     string reverseWords(string s) {
         stringstream ss(s);
         string word;
-        vector<string> words;
+        vector<string>words;
 
-        while(ss >> word){
+        while(ss>>word){
             words.push_back(word);
         }
 
@@ -19,3 +19,4 @@ public:
         return result;
     }
 };
+
