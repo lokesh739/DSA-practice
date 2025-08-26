@@ -1,26 +1,26 @@
 class Solution {
 public:
     int myAtoi(string s) {
-        int i=0;
-        int n=s.length();
-        while(i<n && s[i]==' '){
-            i++;
-        }
-        int sign=1;
-        if(i<n && (s[i]=='+' || s[i]=='-')){
-            sign=(s[i]=='-')?-1:1;
-            i++;
-        }
+        int i = 0, n = s.size();
+        // 1. skip leading spaces
+        while (i < n && s[i] == ' ') ++i;
 
-        long result=0;
-        while(i<n && isdigit(s[i])){
-            result=result*10+(s[i]-'0');
+        // 2. read optional sign
+        int sign = 1;
+        if (i < n && (s[i] == '+' || s[i] == '-'))
+            sign = (s[i++] == '-') ? -1 : 1;
 
-            if(result<INT_MIN) return INT_MIN;
-            if(result>INT_MAX) return INT_MAX;
+        // 3. convert, checking overflow *before* it happens
+        int result = 0;
+        while (i < n && isdigit(s[i])) {
+            int d = s[i++] - '0';
 
-            i++;
+            // If next step would overflow 32-bit, clamp and return
+            if (result > (INT_MAX - d) / 10)
+                return (sign == 1) ? INT_MAX : INT_MIN;
+
+            result = result * 10 + d;
         }
-        return sign*result;
+        return result * sign;
     }
 };
